@@ -3,6 +3,7 @@ package lk.ijse.gdse71.back_end.controller;
 import lk.ijse.gdse71.back_end.dto.JobDTO;
 import lk.ijse.gdse71.back_end.service.JobService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,11 +23,18 @@ public class JobController {
         jobService.saveJob(jobDTO);
     }
 
+
     @PutMapping("update")
-    public void updateJob(@RequestBody JobDTO jobDTO){
-        System.out.println(jobDTO);
+    public void  updateJob(@RequestBody JobDTO jobDTO) {
         jobService.updateJob(jobDTO);
     }
+
+    @DeleteMapping("/delete/{id}")
+    public void deleteJob(@PathVariable int id) {
+        jobService.deleteJob(id);
+    }
+
+
 
     @GetMapping("getall")
     public List<JobDTO> getAllJob(){

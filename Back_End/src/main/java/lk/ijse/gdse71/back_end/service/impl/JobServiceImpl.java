@@ -24,10 +24,25 @@ public class JobServiceImpl implements JobService {
         jobRepository.save(modelMapper.map(jobDTO, Job.class));
     }
 
-    @Override
+   /* @Override
     public void updateJob(JobDTO jobDTO) {
         jobRepository.save(modelMapper.map(jobDTO, Job.class));
-    }
+    }*/
+   @Override
+   public void updateJob(JobDTO jobDTO) {
+       Job existingJob = jobRepository.findById(jobDTO.getId())
+               .orElseThrow(() -> new RuntimeException("Job not found with ID: " + jobDTO.getId()));
+
+       existingJob.setJobTitle(jobDTO.getJobTitle());
+       existingJob.setCompany(jobDTO.getCompany());
+       existingJob.setLocation(jobDTO.getLocation());
+       existingJob.setType(jobDTO.getType());
+       existingJob.setJobDescription(jobDTO.getJobDescription());
+       existingJob.setStatus(jobDTO.getStatus());
+
+       jobRepository.save(existingJob);
+   }
+
 
     @Override
     public List<JobDTO> getAllJobs() {
@@ -37,13 +52,26 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public void changeJobStatus(Integer id) {
-        jobRepository.updateStatus(id);
+        /*jobRepository.updateStatus(id);*/
+        Job job = jobRepository.findById(id).orElseThrow(() -> new RuntimeException("Job not found with ID : " + id));
+
+        if("Activated".equalsIgnoreCase(job.getStatus())){
+            job.setStatus("Deactivated");
+        }else{
+            job.setStatus("Activated");
+        }
+        jobRepository.save(job);
     }
 
     @Override
     public List<JobDTO> getAllJobsByKeyword(String keyword) {
        List<Job> jobs =  jobRepository.findJobByJobTitleContainingIgnoreCase(keyword);
         return modelMapper.map(jobs, new TypeToken<List<JobDTO>>(){}.getType());
+    }
+
+    @Override
+    public void deleteJob(int id) {
+        jobRepository.deleteById(id);
     }
 
 
