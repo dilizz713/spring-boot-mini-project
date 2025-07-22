@@ -5,10 +5,12 @@ import lk.ijse.gdse71.back_end.entity.Job;
 import lk.ijse.gdse71.back_end.repository.JobRepository;
 import lk.ijse.gdse71.back_end.service.JobService;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.query.Page;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
 import org.springframework.stereotype.Service;
 
+import java.awt.print.Pageable;
 import java.util.List;
 
 
@@ -73,6 +75,7 @@ public class JobServiceImpl implements JobService {
     public void deleteJob(int id) {
         jobRepository.deleteById(id);
     }
+
 
 
 }

@@ -48,7 +48,7 @@ $(document).ready(function () {
                 $tbody.empty();
 
                 jobs.forEach((job , index) => {
-                   const row = `
+                    const row = `
                         <tr>
                             <td>${index+1}</td>
                             <td>${job.jobTitle}</td>
@@ -242,5 +242,3 @@ $(document).ready(function () {
     });
 
 })
-
-

@@ -3,6 +3,7 @@ package lk.ijse.gdse71.back_end.controller;
 import lk.ijse.gdse71.back_end.dto.JobDTO;
 import lk.ijse.gdse71.back_end.service.JobService;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.query.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -50,6 +51,8 @@ public class JobController {
     public List<JobDTO> searchJob(@PathVariable("keyword") String keyword){
         return jobService.getAllJobsByKeyword(keyword);
     }
+
+
 
 
 }
