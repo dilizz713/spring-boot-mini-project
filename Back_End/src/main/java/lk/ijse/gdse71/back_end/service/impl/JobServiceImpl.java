@@ -5,12 +5,13 @@ import lk.ijse.gdse71.back_end.entity.Job;
 import lk.ijse.gdse71.back_end.repository.JobRepository;
 import lk.ijse.gdse71.back_end.service.JobService;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.query.Page;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-import java.awt.print.Pageable;
+
 import java.util.List;
 
 
@@ -76,6 +77,11 @@ public class JobServiceImpl implements JobService {
         jobRepository.deleteById(id);
     }
 
+    @Override
+    public Page<JobDTO> getPaginatedJobs(int page, int size) {
+        Page<Job> jobPage = jobRepository.findAll(PageRequest.of(page, size));
+        return jobPage.map(job -> modelMapper.map(job, JobDTO.class));
+    }
 
 
 }

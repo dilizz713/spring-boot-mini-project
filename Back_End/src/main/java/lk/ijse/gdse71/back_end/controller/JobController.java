@@ -3,8 +3,7 @@ package lk.ijse.gdse71.back_end.controller;
 import lk.ijse.gdse71.back_end.dto.JobDTO;
 import lk.ijse.gdse71.back_end.service.JobService;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.query.Page;
-import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -50,6 +49,12 @@ public class JobController {
     @GetMapping("search/{keyword}")
     public List<JobDTO> searchJob(@PathVariable("keyword") String keyword){
         return jobService.getAllJobsByKeyword(keyword);
+    }
+
+    @GetMapping("paginated")
+    public Page<JobDTO> getPaginatedJobs(@RequestParam(defaultValue = "0") int page,
+                                         @RequestParam(defaultValue = "10") int size) {
+        return jobService.getPaginatedJobs(page, size);
     }
 
 

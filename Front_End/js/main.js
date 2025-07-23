@@ -1,6 +1,9 @@
+let currentPage = 0;
+let pageSize = 10;
 
 $(document).ready(function () {
-    loadJobs();
+   // loadJobs();
+    loadPaginatedJobs();
 
     // save
     $('#saveJobBtn').on('click', function () {
@@ -28,7 +31,8 @@ $(document).ready(function () {
                 alert('Job added successfully!');
                 $('#addJobForm')[0].reset();
                 $('#addJobModal').modal('hide');
-                loadJobs();
+
+                loadPaginatedJobs();
             },
             error: function (xhr, status, error) {
                 console.error('Error saving job:', error);
@@ -103,7 +107,7 @@ $(document).ready(function () {
             method: 'PATCH',
             success: function () {
                 alert('Job status updated successfully!');
-                loadJobs();
+                loadPaginatedJobs();
             },
             error: function (xhr, status, error) {
                 console.error('Error updating status:', error);
@@ -150,7 +154,7 @@ $(document).ready(function () {
             success: function () {
                 alert('Job updated successfully!');
                 $('#editJobModal').modal('hide');
-                loadJobs();
+                loadPaginatedJobs();
             },
             error: function () {
                 alert('Failed to update job.');
@@ -168,7 +172,7 @@ $(document).ready(function () {
                 method: 'DELETE',
                 success:function (){
                     alert('Job deleted successfully!');
-                    loadJobs();
+                    loadPaginatedJobs();
                 },
                 error: function () {
                     alert('Failed to delete job.');
@@ -178,11 +182,12 @@ $(document).ready(function () {
     });
 
 
+    //search
     $('#searchInput').on('input', function () {
         const keyword = $(this).val().trim();
 
         if (keyword === '') {
-            loadJobs();
+            loadPaginatedJobs();
             return;
         }
 
@@ -241,4 +246,93 @@ $(document).ready(function () {
         });
     });
 
-})
+    //pagination
+    function loadPaginatedJobs(page = 0) {
+        $.ajax({
+            url: `http://localhost:8080/api/v1/job/paginated?page=${page}&size=${pageSize}`,
+            method: 'GET',
+            success: function (response) {
+                const $tbody = $('#jobsTableBody');
+                $tbody.empty();
+
+                response.content.forEach((job, index) => {
+                    const row = `
+                    <tr>
+                        <td>${page * pageSize + index + 1}</td>
+                        <td>${job.jobTitle}</td>
+                        <td>${job.company}</td>
+                        <td>${job.location}</td>
+                        <td>${job.type}</td>
+                        <td>
+                            <span class="badge ${job.status === 'Activated' ? 'bg-success' : 'bg-secondary'}">
+                                ${job.status}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-warning edit-btn"
+                                data-id="${job.id}"
+                                data-title="${job.jobTitle}"
+                                data-company="${job.company}"
+                                data-location="${job.location}"
+                                data-type="${job.type}"
+                                data-description="${job.jobDescription}"
+                                data-status="${job.status}">
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger delete-btn" data-id="${job.id}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-info toggle-status-btn" data-id="${job.id}">
+                                ${job.status === 'Activated' ? 'Deactivate' : 'Activate'}
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                    $tbody.append(row);
+                });
+
+                updatePagination(response.totalPages, page);
+            },
+            error: function () {
+                alert('Failed to load jobs.');
+            }
+        });
+    }
+
+
+    function updatePagination(totalPages, current) {
+        const $pagination = $('#pagination');
+        $pagination.empty();
+
+        let html = '';
+        if (current > 0) {
+            html += `<li class="page-item"><a class="page-link" href="#" data-page="${current - 1}">Previous</a></li>`;
+        }
+
+        for (let i = 0; i < totalPages; i++) {
+            const displayPageNumber = i * pageSize + 1;
+            html += `<li class="page-item ${i === current ? 'active' : ''}">
+                    <a class="page-link" href="#" data-page="${i}">${displayPageNumber}</a>
+                 </li>`;
+        }
+
+        if (current < totalPages - 1) {
+            html += `<li class="page-item"><a class="page-link" href="#" data-page="${current + 1}">Next</a></li>`;
+        }
+
+        $pagination.html(html);
+    }
+
+    //pagination clicking
+    $(document).on('click', '.page-link', function (e) {
+        e.preventDefault();
+        const page = parseInt($(this).data('page'));
+        if (!isNaN(page)) {
+            currentPage = page;
+            loadPaginatedJobs(page);
+        }
+    });
+
+
+
+});

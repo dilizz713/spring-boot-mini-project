@@ -1,8 +1,8 @@
 package lk.ijse.gdse71.back_end.service;
 
 import lk.ijse.gdse71.back_end.dto.JobDTO;
-import lk.ijse.gdse71.back_end.entity.Job;
-import org.hibernate.query.Page;
+import org.springframework.data.domain.Page;
+
 
 import java.util.List;
 
@@ -16,4 +16,5 @@ public interface JobService {
     void deleteJob(int id);
 
 
+     Page<JobDTO> getPaginatedJobs(int page, int size);
 }
