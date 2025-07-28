@@ -17,4 +17,6 @@ public interface JobRepository extends JpaRepository<Job, Integer> {
     void updateStatus(int id);*/
 
     List<Job> findJobByJobTitleContainingIgnoreCase(String keyword);
+
+    Job findByCompanyAndJobTitle(String company, String jobTitle);
 }
