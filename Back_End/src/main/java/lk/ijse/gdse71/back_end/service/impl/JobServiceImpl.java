@@ -102,7 +102,6 @@ public class JobServiceImpl implements JobService {
             throw new ResourceNotFoundException("Job Not Found");
         }
 
-
     }
 
     @Override

@@ -2,137 +2,72 @@ let currentPage = 0;
 let pageSize = 10;
 
 $(document).ready(function () {
-   // loadJobs();
+
+    //handling API errors
+    function handleApiError(xhr) {
+        const $alert = $('#errorAlert');
+        $alert.removeClass('d-none').empty();
+
+        if (xhr.responseJSON) {
+            const apiResponse = xhr.responseJSON;
+            const msg = $('<strong>').text(apiResponse.message || 'An error occurred.');
+            $alert.append(msg);
+
+            if (apiResponse.data && typeof apiResponse.data === 'object') {
+                const list = $('<ul class="mt-2 mb-0">');
+                for (const field in apiResponse.data) {
+                    const item = $('<li>').text(`${field}: ${apiResponse.data[field]}`);
+                    list.append(item);
+                }
+                $alert.append(list);
+            }
+        } else {
+            $alert.text('Unexpected error. Please try again.');
+        }
+    }
+
+    function clearError() {
+        $('#errorAlert').addClass('d-none').empty();
+    }
+
+
     loadPaginatedJobs();
 
-    // save
+    // Save
     $('#saveJobBtn').on('click', function () {
-        var title = $('#jobTitle').val();
-        var companyName = $('#companyName').val();
-        var location = $('#jobLocation').val();
-        var jobType = $('#jobType').val();
-        var description = $('#jobDescription').val();
+        const title = $('#jobTitle').val();
+        const companyName = $('#companyName').val();
+        const location = $('#jobLocation').val();
+        const jobType = $('#jobType').val();
+        const description = $('#jobDescription').val();
 
         $.ajax({
             method: 'POST',
             url: 'http://localhost:8080/api/v1/job/create',
             contentType: 'application/json',
             data: JSON.stringify({
-                jobTitle:title,
-                company:companyName,
-                location:location,
-                type:jobType,
-                jobDescription:description,
+                jobTitle: title,
+                company: companyName,
+                location: location,
+                type: jobType,
+                jobDescription: description,
                 status: "Activated"
-
-
             }),
             success: function (response) {
-                alert('Job added successfully!');
+                clearError();
+                alert(response.message || 'Job added successfully!');
                 $('#addJobForm')[0].reset();
                 $('#addJobModal').modal('hide');
-
                 loadPaginatedJobs();
             },
             error: function (xhr, status, error) {
                 console.error('Error saving job:', error);
-                alert('Failed to add job. Please try again.');
+                handleApiError(xhr);
             }
         });
     });
 
-//get all
-    function loadJobs(){
-        $.ajax({
-            url:'http://localhost:8080/api/v1/job/getall',
-            method:'GET',
-            dataType:'json',
-            success:function(jobs){
-                const $tbody = $('#jobsTableBody');
-                $tbody.empty();
-
-                jobs.forEach((job , index) => {
-                    const row = `
-                        <tr>
-                            <td>${index+1}</td>
-                            <td>${job.jobTitle}</td>
-                            <td>${job.company}</td>
-                            <td>${job.location}</td>
-                            <td>${job.type}</td>
-                            <td>
-                                <span class="badge ${job.status === 'Activated' ? 'bg-success' : 'bg-secondary'}">
-                                    ${job.status}
-                                </span>
-                            </td>
-                            <td>
-                                <button class="btn btn-sm btn-warning edit-btn"
-                                    data-id="${job.id}"
-                                    data-title="${job.jobTitle}"
-                                    data-company="${job.company}"
-                                    data-location="${job.location}"
-                                    data-type="${job.type}"
-                                    data-description="${job.jobDescription}"
-                                    data-status="${job.status}">
-                                    <i class="bi bi-pencil-square"></i>
-                                </button>
-                                <button class="btn btn-sm btn-danger delete-btn" data-id="${job.id}">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-info toggle-status-btn" data-id="${job.id}">
-                                    ${job.status === 'Activated' ? 'Deactivate' : 'Activate'}
-                                </button>
-                            </td> 
-                        </tr>    
-                   `
-                    $tbody.append(row);
-                });
-            },
-            error: function (xhr, status, error) {
-                console.error('Error load job:', error);
-                alert('Failed to load data. Please try again.');
-            }
-
-
-        });
-
-
-    }
-
-    //  Job Status (Activate/Deactivate)
-    $(document).on('click', '.toggle-status-btn', function () {
-        const jobId = $(this).data('id');
-
-        $.ajax({
-            url: `http://localhost:8080/api/v1/job/status/${jobId}`,
-            method: 'PATCH',
-            success: function () {
-                alert('Job status updated successfully!');
-                loadPaginatedJobs();
-            },
-            error: function (xhr, status, error) {
-                console.error('Error updating status:', error);
-                alert('Failed to update job status. Please try again.');
-            }
-        });
-    });
-
-
-    // edit button
-    $(document).on('click', '.edit-btn', function () {
-        const $btn = $(this);
-
-        $('#editJobId').val($btn.data('id'));
-        $('#editJobTitle').val($btn.data('title'));
-        $('#editCompanyName').val($btn.data('company'));
-        $('#editJobLocation').val($btn.data('location'));
-        $('#editJobType').val($btn.data('type'));
-        $('#editJobDescription').val($btn.data('description'));
-        $('#editJobModal').data('status', $btn.data('status'));
-
-        $('#editJobModal').modal('show');
-    });
-
-    // update
+    // Update Job
     $('#updateJobBtn').on('click', function () {
         const jobId = $('#editJobId').val();
         const status = $('#editJobModal').data('status');
@@ -147,22 +82,24 @@ $(document).ready(function () {
         };
 
         $.ajax({
-            url: `http://localhost:8080/api/v1/job/update`,
+            url: 'http://localhost:8080/api/v1/job/update',
             method: 'PUT',
             contentType: 'application/json',
             data: JSON.stringify(updatedJob),
-            success: function () {
-                alert('Job updated successfully!');
+            success: function (response) {
+                clearError();
+                alert(response.message || 'Job updated successfully!');
                 $('#editJobModal').modal('hide');
                 loadPaginatedJobs();
             },
-            error: function () {
-                alert('Failed to update job.');
+            error: function (xhr, status, error) {
+                console.error('Error updating job:', error);
+                handleApiError(xhr);
             }
         });
     });
 
-    //delete
+    // Delete Job
     $(document).on('click', '.delete-btn', function () {
         const jobId = $(this).data('id');
 
@@ -170,19 +107,52 @@ $(document).ready(function () {
             $.ajax({
                 url: `http://localhost:8080/api/v1/job/delete/${jobId}`,
                 method: 'DELETE',
-                success:function (){
-                    alert('Job deleted successfully!');
+                success: function (response) {
+                    clearError();
+                    alert(response.message || 'Job deleted successfully!');
                     loadPaginatedJobs();
                 },
-                error: function () {
-                    alert('Failed to delete job.');
+                error: function (xhr, status, error) {
+                    console.error('Error deleting job:', error);
+                    handleApiError(xhr);
                 }
-            })
+            });
         }
     });
 
+    // Toggle Job Status (Activate/Deactivate)
+    $(document).on('click', '.toggle-status-btn', function () {
+        const jobId = $(this).data('id');
 
-    //search
+        $.ajax({
+            url: `http://localhost:8080/api/v1/job/status/${jobId}`,
+            method: 'PATCH',
+            success: function (response) {
+                clearError();
+                alert(response.message || 'Job status updated successfully!');
+                loadPaginatedJobs();
+            },
+            error: function (xhr, status, error) {
+                console.error('Error updating status:', error);
+                handleApiError(xhr);
+            }
+        });
+    });
+
+    // edit button
+    $(document).on('click', '.edit-btn', function () {
+        const $btn = $(this);
+        $('#editJobId').val($btn.data('id'));
+        $('#editJobTitle').val($btn.data('title'));
+        $('#editCompanyName').val($btn.data('company'));
+        $('#editJobLocation').val($btn.data('location'));
+        $('#editJobType').val($btn.data('type'));
+        $('#editJobDescription').val($btn.data('description'));
+        $('#editJobModal').data('status', $btn.data('status'));
+        $('#editJobModal').modal('show');
+    });
+
+    // Search Jobs
     $('#searchInput').on('input', function () {
         const keyword = $(this).val().trim();
 
@@ -195,7 +165,9 @@ $(document).ready(function () {
             url: `http://localhost:8080/api/v1/job/search/${encodeURIComponent(keyword)}`,
             method: 'GET',
             dataType: 'json',
-            success: function (jobs) {
+            success: function (response) {
+                clearError();
+                const jobs = response.data;
                 const $tbody = $('#jobsTableBody');
                 $tbody.empty();
 
@@ -205,96 +177,39 @@ $(document).ready(function () {
                 }
 
                 jobs.forEach((job, index) => {
-                    const row = `
-            <tr>
-              <td>${index + 1}</td>
-              <td>${job.jobTitle}</td>
-              <td>${job.company}</td>
-              <td>${job.location}</td>
-              <td>${job.type}</td>
-              <td>
-                <span class="badge ${job.status === 'Activated' ? 'bg-success' : 'bg-secondary'}">
-                  ${job.status}
-                </span>
-              </td>
-              <td>
-                <button class="btn btn-sm btn-warning edit-btn"
-                  data-id="${job.id}"
-                  data-title="${job.jobTitle}"
-                  data-company="${job.company}"
-                  data-location="${job.location}"
-                  data-type="${job.type}"
-                  data-description="${job.jobDescription}"
-                  data-status="${job.status}">
-                  <i class="bi bi-pencil-square"></i>
-                </button>
-                <button class="btn btn-sm btn-danger delete-btn" data-id="${job.id}">
-                  <i class="bi bi-trash"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-info toggle-status-btn" data-id="${job.id}">
-                  ${job.status === 'Activated' ? 'Deactivate' : 'Activate'}
-                </button>
-              </td>
-            </tr>
-          `;
+                    const row = renderJobRow(job, index);
                     $tbody.append(row);
                 });
             },
-            error: function () {
-                alert('Failed to search jobs. Please try again.');
+            error: function (xhr, status, error) {
+                console.error('Error searching jobs:', error);
+                handleApiError(xhr);
             }
         });
     });
 
-    //pagination
+    // Load paginated jobs
     function loadPaginatedJobs(page = 0) {
         $.ajax({
             url: `http://localhost:8080/api/v1/job/paginated?page=${page}&size=${pageSize}`,
             method: 'GET',
+            dataType: 'json',
             success: function (response) {
+                clearError();
+                const pageData = response.data;
                 const $tbody = $('#jobsTableBody');
                 $tbody.empty();
 
-                response.content.forEach((job, index) => {
-                    const row = `
-                    <tr>
-                        <td>${page * pageSize + index + 1}</td>
-                        <td>${job.jobTitle}</td>
-                        <td>${job.company}</td>
-                        <td>${job.location}</td>
-                        <td>${job.type}</td>
-                        <td>
-                            <span class="badge ${job.status === 'Activated' ? 'bg-success' : 'bg-secondary'}">
-                                ${job.status}
-                            </span>
-                        </td>
-                        <td>
-                            <button class="btn btn-sm btn-warning edit-btn"
-                                data-id="${job.id}"
-                                data-title="${job.jobTitle}"
-                                data-company="${job.company}"
-                                data-location="${job.location}"
-                                data-type="${job.type}"
-                                data-description="${job.jobDescription}"
-                                data-status="${job.status}">
-                                <i class="bi bi-pencil-square"></i>
-                            </button>
-                            <button class="btn btn-sm btn-danger delete-btn" data-id="${job.id}">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-info toggle-status-btn" data-id="${job.id}">
-                                ${job.status === 'Activated' ? 'Deactivate' : 'Activate'}
-                            </button>
-                        </td>
-                    </tr>
-                `;
+                pageData.content.forEach((job, index) => {
+                    const row = renderJobRow(job, page * pageSize + index);
                     $tbody.append(row);
                 });
 
-                updatePagination(response.totalPages, page);
+                updatePagination(pageData.totalPages, page);
             },
-            error: function () {
-                alert('Failed to load jobs.');
+            error: function (xhr, status, error) {
+                console.error('Error loading paginated jobs:', error);
+                handleApiError(xhr);
             }
         });
     }
@@ -312,8 +227,8 @@ $(document).ready(function () {
         for (let i = 0; i < totalPages; i++) {
             const displayPageNumber = i * pageSize + 1;
             html += `<li class="page-item ${i === current ? 'active' : ''}">
-                    <a class="page-link" href="#" data-page="${i}">${displayPageNumber}</a>
-                 </li>`;
+                        <a class="page-link" href="#" data-page="${i}">${displayPageNumber}</a>
+                     </li>`;
         }
 
         if (current < totalPages - 1) {
@@ -323,7 +238,7 @@ $(document).ready(function () {
         $pagination.html(html);
     }
 
-    //pagination clicking
+    // Pagination clicking
     $(document).on('click', '.page-link', function (e) {
         e.preventDefault();
         const page = parseInt($(this).data('page'));
@@ -333,6 +248,37 @@ $(document).ready(function () {
         }
     });
 
-
-
+    function renderJobRow(job, index) {
+        return `
+        <tr>
+            <td>${index + 1}</td>
+            <td>${job.jobTitle}</td>
+            <td>${job.company}</td>
+            <td>${job.location}</td>
+            <td>${job.type}</td>
+            <td>
+                <span class="badge ${job.status === 'Activated' ? 'bg-success' : 'bg-secondary'}">
+                    ${job.status}
+                </span>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-warning edit-btn"
+                    data-id="${job.id}"
+                    data-title="${job.jobTitle}"
+                    data-company="${job.company}"
+                    data-location="${job.location}"
+                    data-type="${job.type}"
+                    data-description="${job.jobDescription}"
+                    data-status="${job.status}">
+                    <i class="bi bi-pencil-square"></i>
+                </button>
+                <button class="btn btn-sm btn-danger delete-btn" data-id="${job.id}">
+                    <i class="bi bi-trash"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-info toggle-status-btn" data-id="${job.id}">
+                    ${job.status === 'Activated' ? 'Deactivate' : 'Activate'}
+                </button>
+            </td>
+        </tr>`;
+    }
 });
